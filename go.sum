@@ -1,0 +1,4 @@
+github.com/gorilla/mux v1.8.1 h1:TuBL49tXwgrFYWhqrNgrUNEY92u81SPhu7sTdzQEiWY=
+github.com/gorilla/mux v1.8.1/go.mod h1:AKf9I4AEqPTmMytcMc0KkNouC66V3BtZ4qD5fmWSiMQ=
+github.com/neox5/go-formdata v0.1.0 h1:DiBde5WhaAb/MqKZPAmQMULZrLU+X8qS0mIZ9yYzaT0=
+github.com/neox5/go-formdata v0.1.0/go.mod h1:SYDReihY/a6SVo6HCX6ZMYk06nFpTgDb49hWnjKq8Jw=
