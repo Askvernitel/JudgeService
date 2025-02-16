@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
-	"os/exec"
+	_ "os"
+	_ "os/exec"
 
 	"github.com/gorilla/mux"
 )
@@ -40,49 +40,59 @@ func (s *Server) Run() error {
 
 func (s *Server) getFile(w http.ResponseWriter, r *http.Request) error {
 	err := r.ParseMultipartForm(10 << 20)
-	fmt.Println("Hi")
+	//	fmt.Println("Hi")
 	if err != nil {
 		return err
 	}
 	file, _, err := r.FormFile("code")
+
 	if err != nil {
 		return err
 	}
 	fileBytes, _ := io.ReadAll(file)
+	//header.Filename
 
-	tmpFile, err := os.CreateTemp("./uploaded-files-tmp/", "file*.cpp")
+	compiler := NewCppCompiler("", &fileBytes)
+	judge := NewCppJudge(compiler)
+	err = judge.Run()
 	if err != nil {
 		return err
 	}
+	/*
+		tmpFile, err := os.CreateTemp("./uploaded-files-tmp/", "file*.cpp")
+		if err != nil {
+			return err
+		}
 
-	_, err = tmpFile.Write(fileBytes)
-	if err != nil {
-		return err
-	}
-	input := "50\n50\n"
-	fmt.Println(tmpFile.Name())
-	cmd := exec.Command("g++", tmpFile.Name(), "-o", fmt.Sprintf("./uploaded-files-tmp/output"))
+		_, err = tmpFile.Write(fileBytes)
+		if err != nil {
+			return err
+		}
+		input := "50\n50\n"
+		fmt.Println(tmpFile.Name())
+		cmd := exec.Command("g++", tmpFile.Name(), "-o", fmt.Sprintf("./uploaded-files-tmp/output"))
 
-	err = cmd.Run()
-	if err != nil {
-		return err
-	}
+		err = cmd.Run()
+		if err != nil {
+			return err
+		}
 
-	cmd = exec.Command("./uploaded-files-tmp/output")
-	stdin, err := cmd.StdinPipe()
-	if err != nil {
-		return err
-	}
-	_, err = io.WriteString(stdin, input)
-	if err != nil {
-		return err
-	}
+		cmd = exec.Command("./uploaded-files-tmp/output")
+		stdin, err := cmd.StdinPipe()
+		if err != nil {
+			return err
+		}
+		_, err = io.WriteString(stdin, input)
+		if err != nil {
+			return err
+		}
 
-	//	cmd.Stdout = os.Stdout
-	output, err := cmd.Output()
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(output))
+		//	cmd.Stdout = os.Stdout
+		output, err := cmd.Output()
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(output))
+		return nil*/
 	return nil
 }
