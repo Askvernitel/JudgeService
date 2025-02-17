@@ -3,19 +3,21 @@ package main
 //import "os/exec"
 
 type Tester interface {
-	Run() (int, error)
+	Run(string) (int, error)
 }
 
 type CppTester struct {
-	binPathName string
 }
 
-func NewCppTester(binPathName string, problem Problem) *CppTester {
-	return &CppTester{binPathName: binPathName}
+func NewCppTester(problem Problem) *CppTester {
+	return &CppTester{}
+}
+func (c *CppTester) compareOutputs() {
+
 }
 
-func (c *CppTester) Run() error {
+func (c *CppTester) Run(binPathName string) (int, error) {
 	//	cmd := exec.Command(c.binPathName)
 
-	return nil
+	return 0, nil
 }

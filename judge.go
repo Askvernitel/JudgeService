@@ -13,12 +13,13 @@ const (
 
 // c++ judge
 type CppJudge struct {
+	Tester   Tester
 	Compiler Compiler
 	Result   int
 }
 
-func NewCppJudge(compiler Compiler) *CppJudge {
-	return &CppJudge{Compiler: compiler}
+func NewCppJudge(compiler Compiler, tester Tester) *CppJudge {
+	return &CppJudge{Compiler: compiler, Tester: tester}
 }
 
 func (j *CppJudge) Run() error {
@@ -27,7 +28,8 @@ func (j *CppJudge) Run() error {
 	if err != nil {
 		return err
 	}
-
+	binPathName := j.Compiler.OutputBinPathName()
+	j.Tester.Run(binPathName)
 	return nil
 }
 
