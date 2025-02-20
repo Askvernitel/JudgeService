@@ -56,7 +56,7 @@ func (s *Server) getFile(w http.ResponseWriter, r *http.Request) error {
 	fileBytes, _ := io.ReadAll(file)
 
 	compiler := NewCppCompiler("", &fileBytes)
-	problem := NewProblem(contestName, problemName)
+	problem := NewNormalProblem(contestName, problemName)
 	err = problem.initProblemTestCases()
 	fmt.Println(err)
 	tester := NewCppTester(problem)
