@@ -30,7 +30,7 @@ func WithErrorHandleFunc(f ErrorHandlerFunc) http.HandlerFunc {
 func (s *Server) Run() error {
 	r := mux.NewRouter()
 
-	r.HandleFunc("/{contest}/{problem}", WithErrorHandleFunc(s.getFile)).Methods("POST", "OPTIONS")
+	r.HandleFunc("/contest/{contest}/{problem}", WithErrorHandleFunc(s.getFile)).Methods("POST", "OPTIONS")
 	r.Use(mux.CORSMethodMiddleware(r))
 	if err := http.ListenAndServe(":4040", r); err != nil {
 		return err
@@ -39,7 +39,8 @@ func (s *Server) Run() error {
 }
 
 func (s *Server) getFile(w http.ResponseWriter, r *http.Request) error {
-	_, _, err := getContestAndProblem(r)
+	fmt.Println("HI")
+	contestName, problemName, err := getContestAndProblem(r)
 	if err != nil {
 		return err
 	}
@@ -55,7 +56,10 @@ func (s *Server) getFile(w http.ResponseWriter, r *http.Request) error {
 	fileBytes, _ := io.ReadAll(file)
 
 	compiler := NewCppCompiler("", &fileBytes)
-	tester := NewCppTester(Problem{})
+	problem := NewProblem(contestName, problemName)
+	err = problem.initProblemTestCases()
+	fmt.Println(err)
+	tester := NewCppTester(problem)
 	judge := NewCppJudge(compiler, tester)
 	return judge.Run()
 }
@@ -76,8 +80,10 @@ func getProblemName(r *http.Request) (string, error) {
 	return problemName, nil
 }
 func getContestAndProblem(r *http.Request) (string, string, error) {
-	var err error
 	contestName, err := getContestName(r)
+	if err != nil {
+		return "", "", err
+	}
 	problemName, err := getProblemName(r)
 	return contestName, problemName, err
 }
