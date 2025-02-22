@@ -1,5 +1,7 @@
 package main
 
+//TODO: Just Leaving These maybe add buffering to files so all
+// data will not jut go to memory
 import "os"
 
 var problemsPath string

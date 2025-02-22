@@ -4,6 +4,7 @@ import (
 	"bytes"
 	_ "bytes"
 	"fmt"
+	_ "io"
 	"os"
 	"path/filepath"
 
@@ -12,6 +13,7 @@ import (
 
 type Problem interface {
 	NextTestCase() TestCase
+	GetAllTestCases() []*ProblemTestCase
 }
 
 //var problemsPath string = os.Getenv("PROBLEMS_PATH")
@@ -24,11 +26,12 @@ type NormalProblem struct {
 	ProblemPathName  string
 	TestsDirPathName string
 	TestCases        []*ProblemTestCase
+	currentTestIndex int
 }
 
 func NewNormalProblem(contestName, problemName string) *NormalProblem {
 
-	return &NormalProblem{ProblemPathName: fmt.Sprintf("%s/%s/%s", problemsPath, contestName, problemName), TestCases: []*ProblemTestCase{}}
+	return &NormalProblem{ProblemPathName: fmt.Sprintf("%s/%s/%s", problemsPath, contestName, problemName), TestCases: []*ProblemTestCase{}, currentTestIndex: 0}
 }
 func (p *NormalProblem) readProblemYaml() (*ProblemYaml, error) {
 	rawBytes, err := os.ReadFile(fmt.Sprintf("%s/%s", p.ProblemPathName, PROBLEM_YAML))
@@ -64,14 +67,13 @@ func (p *NormalProblem) addTestCases() error {
 			//TODO: Separate this into functions
 			var inFilePath, outFilePath string
 			for _, inOutFile := range files {
-				fmt.Println("inOutFile: " + inOutFile.Name())
-				if !inOutFile.IsDir() && filepath.Ext(inOutFile.Name()) == "in" && inFilePath == "" {
+				if !inOutFile.IsDir() && filepath.Ext(inOutFile.Name()) == ".in" && inFilePath == "" {
 					inFilePath = fmt.Sprintf("%s/%s/%s", fullTestDirPath, dirName, inOutFile.Name())
-					fmt.Println(inFilePath)
+					//fmt.Println(inFilePath)
 				}
-				if !inOutFile.IsDir() && filepath.Ext(inOutFile.Name()) == "ans" && outFilePath == "" {
+				if !inOutFile.IsDir() && filepath.Ext(inOutFile.Name()) == ".ans" && outFilePath == "" {
 					outFilePath = fmt.Sprintf("%s/%s/%s", fullTestDirPath, dirName, inOutFile.Name())
-					fmt.Println(inFilePath)
+					//			fmt.Println(inFilePath)
 				}
 			}
 			if inFilePath == "" || outFilePath == "" {
@@ -93,13 +95,18 @@ func (p *NormalProblem) initProblemTestCases() error {
 	if err != nil {
 		return err
 	}
-	for _, test := range p.TestCases {
-		fmt.Println(test.TestInput)
-	}
 	return nil
 }
-func (p *NormalProblem) NextTestCase() TestCase {
-	return nil
+func (p *NormalProblem) NextTestCase() TestCase { //
+	if len(p.TestCases) == p.currentTestIndex+1 {
+		return nil
+	}
+	currentTest := p.TestCases[p.currentTestIndex]
+	p.currentTestIndex++
+	return currentTest
+}
+func (p *NormalProblem) GetAllTestCases() []*ProblemTestCase {
+	return p.TestCases
 }
 
 type TestCase interface {
@@ -107,13 +114,16 @@ type TestCase interface {
 }
 
 type ProblemTestCase struct {
-	TestInput  string
-	TestOutput string
+	TestInputPath  string
+	TestOutputPath string
 }
 
-func NewProblemTestCase(testInput string, testOutput string) *ProblemTestCase {
-	return &ProblemTestCase{TestInput: testInput, TestOutput: testOutput}
+func NewProblemTestCase(testInputPath, testOutputPath string) *ProblemTestCase {
+	return &ProblemTestCase{TestInputPath: testInputPath, TestOutputPath: testOutputPath}
 }
 
-func (t *ProblemTestCase) RunTestCase() {
+func (t *ProblemTestCase) RunTestCase(out string) int {
+	fmt.Println(t.TestInputPath)
+	fmt.Println(t.TestOutputPath)
+	return 0
 }

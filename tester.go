@@ -7,13 +7,16 @@ type Tester interface {
 }
 
 type CppTester struct {
+	Problem Problem
 }
 
 func NewCppTester(problem Problem) *CppTester {
-	return &CppTester{}
+	return &CppTester{Problem: problem}
 }
 
 func (c *CppTester) Run(binPathName string) (int, error) {
+	test := c.Problem.NextTestCase()
+	test.RunTestCase("")
 	//	cmd := exec.Command(c.binPathName)
 
 	return 0, nil

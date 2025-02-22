@@ -39,7 +39,6 @@ func (s *Server) Run() error {
 }
 
 func (s *Server) getFile(w http.ResponseWriter, r *http.Request) error {
-	fmt.Println("HI")
 	contestName, problemName, err := getContestAndProblem(r)
 	if err != nil {
 		return err
