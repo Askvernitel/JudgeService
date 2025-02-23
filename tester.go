@@ -15,8 +15,15 @@ func NewCppTester(problem Problem) *CppTester {
 }
 
 func (c *CppTester) Run(binPathName string) (int, error) {
+
 	test := c.Problem.NextTestCase()
-	test.RunTestCase("")
+	for test != nil {
+		result, err := test.RunTestCase(binPathName)
+		if err != nil {
+			return result, nil
+		}
+		test = c.Problem.NextTestCase()
+	}
 	//	cmd := exec.Command(c.binPathName)
 
 	return 0, nil

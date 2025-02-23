@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 type Judge interface {
 	Run()
 }
@@ -9,6 +11,7 @@ const (
 	RESULT_WRONG_ANSWER        = 2
 	RESULT_TIME_EXCEEDED_LIMIT = 3
 	RESULT_COMPILATION_ERROR   = 4
+	RESULT_JUDGE_ERROR         = 5
 )
 
 // c++ judge
@@ -29,8 +32,10 @@ func (j *CppJudge) Run() error {
 		return err
 	}
 	binPathName := j.Compiler.OutputBinPathName()
-	j.Tester.Run(binPathName)
-	return nil
+	result, err := j.Tester.Run(binPathName)
+	fmt.Println(result)
+
+	return err
 }
 
 // java judge

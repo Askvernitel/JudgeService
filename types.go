@@ -12,7 +12,7 @@ type ProblemYaml struct {
 	TestsPath string `yaml:"tests_path"`
 }
 
-func readFile(pathName string) ([]byte, error) {
+func readFileBytes(pathName string) ([]byte, error) {
 	file, err := os.Open(pathName)
 
 	if err != nil {

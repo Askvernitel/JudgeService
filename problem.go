@@ -6,6 +6,7 @@ import (
 	"fmt"
 	_ "io"
 	"os"
+	"os/exec"
 	"path/filepath"
 
 	yaml "gopkg.in/yaml.v3"
@@ -67,18 +68,22 @@ func (p *NormalProblem) addTestCases() error {
 			//TODO: Separate this into functions
 			var inFilePath, outFilePath string
 			for _, inOutFile := range files {
+				fmt.Println(inOutFile)
 				if !inOutFile.IsDir() && filepath.Ext(inOutFile.Name()) == ".in" && inFilePath == "" {
 					inFilePath = fmt.Sprintf("%s/%s/%s", fullTestDirPath, dirName, inOutFile.Name())
-					//fmt.Println(inFilePath)
+					fmt.Println(inFilePath)
 				}
 				if !inOutFile.IsDir() && filepath.Ext(inOutFile.Name()) == ".ans" && outFilePath == "" {
 					outFilePath = fmt.Sprintf("%s/%s/%s", fullTestDirPath, dirName, inOutFile.Name())
-					//			fmt.Println(inFilePath)
+					fmt.Println(inFilePath)
 				}
 			}
+
 			if inFilePath == "" || outFilePath == "" {
 				continue
 			}
+			fmt.Printf("File Input Path %s\n", inFilePath)
+			fmt.Printf("File Output Path %s\n", outFilePath)
 			p.TestCases = append(p.TestCases, NewProblemTestCase(inFilePath, outFilePath))
 		}
 	}
@@ -98,7 +103,7 @@ func (p *NormalProblem) initProblemTestCases() error {
 	return nil
 }
 func (p *NormalProblem) NextTestCase() TestCase { //
-	if len(p.TestCases) == p.currentTestIndex+1 {
+	if len(p.TestCases) == p.currentTestIndex {
 		return nil
 	}
 	currentTest := p.TestCases[p.currentTestIndex]
@@ -110,7 +115,7 @@ func (p *NormalProblem) GetAllTestCases() []*ProblemTestCase {
 }
 
 type TestCase interface {
-	RunTestCase(string) int
+	RunTestCase(string) (int, error)
 }
 
 type ProblemTestCase struct {
@@ -122,8 +127,22 @@ func NewProblemTestCase(testInputPath, testOutputPath string) *ProblemTestCase {
 	return &ProblemTestCase{TestInputPath: testInputPath, TestOutputPath: testOutputPath}
 }
 
-func (t *ProblemTestCase) RunTestCase(out string) int {
+func (t *ProblemTestCase) RunTestCase(binPath string) (int, error) {
 	fmt.Println(t.TestInputPath)
-	fmt.Println(t.TestOutputPath)
-	return 0
+	file, err := os.Open(t.TestInputPath)
+	if err != nil {
+		return RESULT_JUDGE_ERROR, err
+	}
+
+	cmd := exec.Command(binPath)
+	cmd.Stdin = file
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stdout
+	err = cmd.Run()
+	if err != nil {
+		return RESULT_JUDGE_ERROR, err
+	}
+
+	//	fmt.Println(t.TestOutputPath)
+	return RESULT_ACCEPTED, err
 }

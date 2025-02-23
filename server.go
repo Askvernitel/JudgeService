@@ -30,7 +30,7 @@ func WithErrorHandleFunc(f ErrorHandlerFunc) http.HandlerFunc {
 func (s *Server) Run() error {
 	r := mux.NewRouter()
 
-	r.HandleFunc("/contest/{contest}/{problem}", WithErrorHandleFunc(s.getFile)).Methods("POST", "OPTIONS")
+	r.HandleFunc("/judge/{contest}/{problem}", WithErrorHandleFunc(s.getFile)).Methods("POST", "OPTIONS")
 	r.Use(mux.CORSMethodMiddleware(r))
 	if err := http.ListenAndServe(":4040", r); err != nil {
 		return err
