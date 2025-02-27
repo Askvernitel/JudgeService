@@ -1,12 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	_ "os"
 	_ "os/exec"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
@@ -30,15 +32,16 @@ func WithErrorHandleFunc(f ErrorHandlerFunc) http.HandlerFunc {
 func (s *Server) Run() error {
 	r := mux.NewRouter()
 
-	r.HandleFunc("/judge/{contest}/{problem}", WithErrorHandleFunc(s.getFile)).Methods("POST", "OPTIONS")
 	r.Use(mux.CORSMethodMiddleware(r))
-	if err := http.ListenAndServe(":4040", r); err != nil {
+	r.HandleFunc("/judge/{contest}/{problem}", WithErrorHandleFunc(s.JudgeProblem)).Methods("POST", "OPTIONS")
+
+	if err := http.ListenAndServe(":4040", handlers.CORS()(r)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *Server) getFile(w http.ResponseWriter, r *http.Request) error {
+func (s *Server) JudgeProblem(w http.ResponseWriter, r *http.Request) error {
 	contestName, problemName, err := getContestAndProblem(r)
 	if err != nil {
 		return err
@@ -52,15 +55,29 @@ func (s *Server) getFile(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	fileBytes, _ := io.ReadAll(file)
-
+	fileBytes, err := io.ReadAll(file)
+	if err != nil {
+		return err
+	}
 	compiler := NewCppCompiler("", &fileBytes)
 	problem := NewNormalProblem(contestName, problemName)
 	err = problem.initProblemTestCases()
-	fmt.Println(err)
+	if err != nil {
+		return err
+	}
 	tester := NewCppTester(problem)
 	judge := NewCppJudge(compiler, tester)
-	return judge.Run()
+
+	err = judge.Run()
+	if err != nil {
+		return err
+	}
+	fmt.Println(judge.Results)
+	err = json.NewEncoder(w).Encode(judge.Results)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func getContestName(r *http.Request) (string, error) {

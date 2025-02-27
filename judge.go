@@ -18,11 +18,11 @@ const (
 type CppJudge struct {
 	Tester   Tester
 	Compiler Compiler
-	Result   int
+	Results  []int
 }
 
 func NewCppJudge(compiler Compiler, tester Tester) *CppJudge {
-	return &CppJudge{Compiler: compiler, Tester: tester}
+	return &CppJudge{Compiler: compiler, Tester: tester, Results: []int{}}
 }
 
 func (j *CppJudge) Run() error {
@@ -32,9 +32,8 @@ func (j *CppJudge) Run() error {
 		return err
 	}
 	binPathName := j.Compiler.OutputBinPathName()
-	result, err := j.Tester.Run(binPathName)
-	fmt.Println(result)
-
+	j.Results, err = j.Tester.Run(binPathName)
+	fmt.Println(j.Results)
 	return err
 }
 
