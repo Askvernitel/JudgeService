@@ -3,6 +3,7 @@ package main
 import (
 	//	"bytes"
 	"fmt"
+	"github.com/google/uuid"
 	"os"
 	"os/exec"
 )
@@ -13,7 +14,8 @@ type Compiler interface {
 }
 
 const (
-	GPP_COMPILER_COMMAND = "g++"
+	GPP_COMPILER_COMMAND  = "g++"
+	COMPILED_BINARIES_DIR = "./uploaded-files-tmp/"
 )
 
 type GppCompiler struct {
@@ -26,7 +28,7 @@ type GppCompiler struct {
 func NewCppCompiler(filePathName string, fileData *[]byte) *GppCompiler {
 	return &GppCompiler{
 		FilePathName: filePathName, FileData: fileData,
-		OutputFileName: "./uploaded-files-tmp/output",
+		OutputFileName: COMPILED_BINARIES_DIR + uuid.New().String(),
 	}
 }
 

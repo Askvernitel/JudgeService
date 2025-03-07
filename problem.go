@@ -132,24 +132,24 @@ func (t *ProblemTestCase) RunTestCase(binPath string) (int, error) {
 		return RESULT_JUDGE_ERROR, err
 	}
 	defer inputFile.Close()
-	var outputBuffer bytes.Buffer
+	var clientOutputBuffer bytes.Buffer
 	cmd := exec.Command(binPath)
 
 	cmd.Stdin = inputFile
-	cmd.Stdout = &outputBuffer
+	cmd.Stdout = &clientOutputBuffer
 	cmd.Stderr = os.Stdout
 	err = cmd.Run()
 	if err != nil {
 		return RESULT_JUDGE_ERROR, err
 	}
 
-	outputFile, err := os.Open(t.TestOutputPath)
+	realOutputFile, err := os.Open(t.TestOutputPath)
 	if err != nil {
 		return RESULT_JUDGE_ERROR, err
 	}
-	defer outputFile.Close()
+	defer realOutputFile.Close()
 
-	areEqualReaders := CompareReaders(outputFile, &outputBuffer)
+	areEqualReaders := CompareReaders(realOutputFile, &clientOutputBuffer)
 	if !areEqualReaders {
 		return RESULT_WRONG_ANSWER, nil
 	}

@@ -5,11 +5,16 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	_ "os"
 	_ "os/exec"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+)
+
+const (
+	UPLOADED_CODE_FORM_KEY = "code"
 )
 
 type Server struct {
@@ -46,11 +51,13 @@ func (s *Server) JudgeProblem(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
+	//bytes 10 << 20
 	err = r.ParseMultipartForm(10 << 20)
 	if err != nil {
+		fmt.Println(err)
 		return err
 	}
-	file, _, err := r.FormFile("code")
+	file, _, err := r.FormFile(UPLOADED_CODE_FORM_KEY)
 
 	if err != nil {
 		return err
@@ -74,6 +81,10 @@ func (s *Server) JudgeProblem(w http.ResponseWriter, r *http.Request) error {
 	}
 	fmt.Println(judge.Results)
 	err = json.NewEncoder(w).Encode(judge.Results)
+	if err != nil {
+		return err
+	}
+	err = os.Remove(judge.Compiler.OutputBinPathName())
 	if err != nil {
 		return err
 	}
