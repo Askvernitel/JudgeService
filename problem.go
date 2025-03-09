@@ -3,11 +3,12 @@ package main
 import (
 	"bytes"
 	"fmt"
-	yaml "gopkg.in/yaml.v3"
 	_ "io"
 	"os"
-	"os/exec"
+	_ "os/exec"
 	"path/filepath"
+
+	yaml "gopkg.in/yaml.v3"
 )
 
 type Problem interface {
@@ -126,29 +127,29 @@ func NewProblemTestCase(testInputPath, testOutputPath string) *ProblemTestCase {
 }
 
 func (t *ProblemTestCase) RunTestCase(binPath string) (int, error) {
-	fmt.Println(t.TestInputPath)
+	cont := NewCmdLimiter(binPath, 6, 2)
+
+	//	fmt.Println(t.TestInputPath)
+
 	inputFile, err := os.Open(t.TestInputPath)
 	if err != nil {
 		return RESULT_JUDGE_ERROR, err
 	}
 	defer inputFile.Close()
 	var clientOutputBuffer bytes.Buffer
-	cmd := exec.Command(binPath)
 
-	cmd.Stdin = inputFile
-	cmd.Stdout = &clientOutputBuffer
-	cmd.Stderr = os.Stdout
-	err = cmd.Run()
-	if err != nil {
+	cont.Stdin = inputFile
+	cont.Stdout = &clientOutputBuffer
+	if err = cont.Run(); err != nil {
+		fmt.Println(err)
 		return RESULT_JUDGE_ERROR, err
 	}
-
+	//fmt.Println(t.TestOutputPath)
 	realOutputFile, err := os.Open(t.TestOutputPath)
 	if err != nil {
 		return RESULT_JUDGE_ERROR, err
 	}
 	defer realOutputFile.Close()
-
 	areEqualReaders := CompareReaders(realOutputFile, &clientOutputBuffer)
 	if !areEqualReaders {
 		return RESULT_WRONG_ANSWER, nil

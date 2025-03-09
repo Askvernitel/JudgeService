@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	_ "os"
 	_ "os/exec"
 
 	"github.com/gorilla/handlers"
@@ -79,7 +78,6 @@ func (s *Server) JudgeProblem(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(judge.Results)
 	err = json.NewEncoder(w).Encode(judge.Results)
 	if err != nil {
 		return err

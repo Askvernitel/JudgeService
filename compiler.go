@@ -3,9 +3,10 @@ package main
 import (
 	//	"bytes"
 	"fmt"
-	"github.com/google/uuid"
-	"os"
+	"io"
 	"os/exec"
+
+	"github.com/google/uuid"
 )
 
 type Compiler interface {
@@ -36,11 +37,24 @@ func (c *GppCompiler) Compile() error {
 	if c.FilePathName == "" {
 		//TODO: make this readable command
 		fmt.Println(c.OutputFileName)
-		cmd := exec.Command("sh", "-c", fmt.Sprintf("echo '%s' | %s %s %s %s", string(*c.FileData), GPP_COMPILER_COMMAND, "-o", c.OutputFileName, "-xc++ -"))
-
-		cmd.Stderr = os.Stdout
-
-		return cmd.Run()
+		/*
+			escapedFile := shellEscape(string(*c.FileData))
+			cmd := exec.Command("sh", "-c", fmt.Sprintf("echo %s | %s %s %s %s", escapedFile, GPP_COMPILER_COMMAND, "-o", c.OutputFileName, "-xc++ -"))
+		*/
+		cmd := exec.Command(GPP_COMPILER_COMMAND, "-o", c.OutputFileName, "-xc++", "-")
+		stdin, err := cmd.StdinPipe()
+		if err != nil {
+			return fmt.Errorf("failed to get stdin pipe: %w", err)
+		}
+		if err := cmd.Start(); err != nil {
+			return fmt.Errorf("failed to start command: %w", err)
+		}
+		_, err = io.WriteString(stdin, string(*c.FileData))
+		if err != nil {
+			return fmt.Errorf("failed to write to stdin: %w", err)
+		}
+		stdin.Close()
+		return cmd.Wait()
 	}
 	cmd := exec.Command(GPP_COMPILER_COMMAND, c.FilePathName, "-o", c.OutputFileName, "-xc++ -")
 

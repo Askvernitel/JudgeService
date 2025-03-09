@@ -2,6 +2,8 @@ package main
 
 //TODO: Just Leaving These maybe add buffering to files so all
 // data will not just go to memory
+
+//TODO: Add every path variable to path
 import "os"
 
 var problemsPath string

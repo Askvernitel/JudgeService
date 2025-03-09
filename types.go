@@ -10,5 +10,7 @@ type ProblemYaml struct {
 	TestsPath string `yaml:"tests_path"`
 }
 type JudgeResponse struct {
-	Results []int `json:"results"`
+	Results         []int `json:"results"`
+	TimeForEachTest []int `json:"timeForEachTest"`
+	Score           int   `json:"score"`
 }
