@@ -3,7 +3,9 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"io"
+	"net/http"
 	"os"
 )
 
@@ -34,4 +36,16 @@ func CompareReaders(reader1, reader2 io.Reader) bool {
 		}
 	}
 	return !(scanner1.Scan() && scanner2.Scan())
+}
+
+func WriteJSON(w http.ResponseWriter, status int, v any) error {
+	w.WriteHeader(status)
+	e := json.NewEncoder(w)
+
+	err := e.Encode(v)
+	if err != nil {
+		return err
+	}
+	return nil
+
 }

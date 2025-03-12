@@ -14,3 +14,7 @@ type JudgeResponse struct {
 	TimeForEachTest []int `json:"timeForEachTest"`
 	Score           int   `json:"score"`
 }
+
+type ApiError struct {
+	Error string `json:"error"`
+}

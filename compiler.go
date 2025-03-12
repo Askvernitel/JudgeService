@@ -37,10 +37,6 @@ func (c *GppCompiler) Compile() error {
 	if c.FilePathName == "" {
 		//TODO: make this readable command
 		fmt.Println(c.OutputFileName)
-		/*
-			escapedFile := shellEscape(string(*c.FileData))
-			cmd := exec.Command("sh", "-c", fmt.Sprintf("echo %s | %s %s %s %s", escapedFile, GPP_COMPILER_COMMAND, "-o", c.OutputFileName, "-xc++ -"))
-		*/
 		cmd := exec.Command(GPP_COMPILER_COMMAND, "-o", c.OutputFileName, "-xc++", "-")
 		stdin, err := cmd.StdinPipe()
 		if err != nil {

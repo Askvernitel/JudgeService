@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -14,6 +13,7 @@ import (
 
 const (
 	UPLOADED_CODE_FORM_KEY = "code"
+	MAX_UPLOAD_SIZE        = 1024 * 1024 * 5
 )
 
 type Server struct {
@@ -28,7 +28,8 @@ func WithErrorHandleFunc(f ErrorHandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := f(w, r); err != nil {
 			fmt.Println(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			WriteJSON(w, http.StatusInternalServerError, ApiError{Error: err.Error()})
+			//			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	}
 }
@@ -42,26 +43,34 @@ func (s *Server) Run() error {
 	if err := http.ListenAndServe(":4040", handlers.CORS()(r)); err != nil {
 		return err
 	}
+
+	return nil
+
+}
+
+func getFileData(r *http.Request, key string) ([]byte, error) {
+	err := r.ParseMultipartForm(MAX_UPLOAD_SIZE)
+	if err != nil {
+		return nil, err
+	}
+	file, _, err := r.FormFile(key)
+	if err != nil {
+		return nil, err
+	}
+	return io.ReadAll(file)
+}
+func RunJudge(w http.ResponseWriter, fileBytes []byte) error {
+
 	return nil
 }
 
 func (s *Server) JudgeProblem(w http.ResponseWriter, r *http.Request) error {
+	r.Body = http.MaxBytesReader(w, r.Body, MAX_UPLOAD_SIZE)
 	contestName, problemName, err := getContestAndProblem(r)
 	if err != nil {
 		return err
 	}
-	//bytes 10 << 20
-	err = r.ParseMultipartForm(10 << 20)
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-	file, _, err := r.FormFile(UPLOADED_CODE_FORM_KEY)
-
-	if err != nil {
-		return err
-	}
-	fileBytes, err := io.ReadAll(file)
+	fileBytes, err := getFileData(r, UPLOADED_CODE_FORM_KEY)
 	if err != nil {
 		return err
 	}
@@ -78,7 +87,6 @@ func (s *Server) JudgeProblem(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	err = json.NewEncoder(w).Encode(judge.Results)
 	if err != nil {
 		return err
 	}
@@ -86,7 +94,7 @@ func (s *Server) JudgeProblem(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	return nil
+	return WriteJSON(w, http.StatusOK, JudgeResponse{Results: judge.Results})
 }
 
 func getContestName(r *http.Request) (string, error) {
