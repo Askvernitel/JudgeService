@@ -13,6 +13,12 @@ import (
 	"github.com/docker/docker/client"
 )
 
+const (
+	CMD_RESULT_RUN_SUCCESSFUL        = 1
+	CMD_RESULT_TIME_EXCEEDED_LIMIT   = 2
+	CMD_RESULT_MEMORY_EXCEEDED_LIMIT = 3
+)
+
 type CmdLimiter struct {
 	BinPath       string
 	TimeLimitSec  int64
@@ -26,30 +32,27 @@ func NewCmdLimiter(binPath string, memoryLimitMb int64, timeLimitSec int64) *Cmd
 	return &CmdLimiter{BinPath: binPath, MemoryLimitMb: memoryLimitMb, TimeLimitSec: timeLimitSec}
 }
 
-// TODO: fix this
-func (c *CmdLimiter) Run() error {
-	//_errCh := make(chan error)
-	//	inout := make(chan []byte)
+func (c *CmdLimiter) Run() (*CmdResult, error) {
 	ctx := context.Background()
 
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 	//TODO: Check If Image Exists
 	_image := "debian:latest"
 
 	_, err = cli.ImagePull(ctx, _image, image.PullOptions{})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	resp, err := cli.ContainerCreate(ctx, &container.Config{
 
 		Image:        _image,
 		Cmd:          []string{c.BinPath},
-		Tty:          false, // stuff is echoes when this is turned on
+		Tty:          false, // stuff echoes when this is turned on
 		OpenStdin:    true,
 		AttachStdin:  true,
 		AttachStdout: true,
@@ -59,7 +62,7 @@ func (c *CmdLimiter) Run() error {
 		Resources: container.Resources{Memory: c.MemoryLimitMb * 1024 * 1024, NanoCPUs: int64(time.Second * time.Duration(c.TimeLimitSec))},
 	}, nil, nil, "")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	containerId := resp.ID
 	hijackedResp, err := cli.ContainerAttach(ctx, containerId, container.AttachOptions{
@@ -69,9 +72,8 @@ func (c *CmdLimiter) Run() error {
 		Stderr: true,
 	})
 	if err := cli.ContainerStart(ctx, containerId, container.StartOptions{}); err != nil {
-		return err
+		return nil, err
 	}
-
 	timeOutCtx, cancel := context.WithTimeout(ctx, time.Duration(c.TimeLimitSec)*time.Second)
 	defer cancel()
 	go io.Copy(c.Stdout, hijackedResp.Reader)
@@ -84,16 +86,16 @@ func (c *CmdLimiter) Run() error {
 	select {
 	case <-timeOutCtx.Done():
 		if err := cli.ContainerKill(ctx, containerId, "SIGKILL"); err != nil {
-			return err
+			return nil, err
 		}
-		return fmt.Errorf("TLE")
+		return &CmdResult{Result: CMD_RESULT_TIME_EXCEEDED_LIMIT}, nil
 	case err = <-errCh:
-		return err
+		return nil, err
 	case exitStatus := <-statusCh:
 		fmt.Printf("Exit Code: %v", exitStatus.StatusCode)
 	}
 	if err := cli.ContainerRemove(ctx, containerId, container.RemoveOptions{Force: true}); err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return &CmdResult{Result: CMD_RESULT_RUN_SUCCESSFUL}, err
 }

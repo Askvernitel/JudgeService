@@ -87,9 +87,6 @@ func (s *Server) JudgeProblem(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	if err != nil {
-		return err
-	}
 	err = os.Remove(judge.Compiler.OutputBinPathName())
 	if err != nil {
 		return err

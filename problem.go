@@ -14,18 +14,23 @@ import (
 type Problem interface {
 	NextTestCase() TestCase
 	GetAllTestCases() []*ProblemTestCase
+	GetTestLimits() *TestLimits
 }
 
 //var problemsPath string = os.Getenv("PROBLEMS_PATH")
 
 const (
-	PROBLEM_YAML = "problem.yaml"
+	PROBLEM_YAML            = "problem.yaml"
+	DEFAULT_TEST_PATH       = "data"
+	DEFAULT_MEMORY_LIMIT_MB = 256
+	DEFAULT_TIME_LIMIT_SEC  = 1
 )
 
 type NormalProblem struct {
 	ProblemPathName  string
 	TestsDirPathName string
 	TestCases        []*ProblemTestCase
+	TestLimits       *TestLimits
 	currentTestIndex int
 }
 
@@ -40,8 +45,7 @@ func (p *NormalProblem) readProblemYaml() (*ProblemYaml, error) {
 	}
 	bytesReader := bytes.NewReader(rawBytes)
 	decoder := yaml.NewDecoder(bytesReader)
-
-	problemInfo := &ProblemYaml{}
+	problemInfo := &ProblemYaml{TestsPath: DEFAULT_TEST_PATH, TestLimits: &TestLimits{MemoryLimitMb: DEFAULT_MEMORY_LIMIT_MB, TimeLimitSec: DEFAULT_TIME_LIMIT_SEC}}
 	err = decoder.Decode(problemInfo)
 	if err != nil {
 		return nil, err
@@ -49,6 +53,7 @@ func (p *NormalProblem) readProblemYaml() (*ProblemYaml, error) {
 	return problemInfo, nil
 
 }
+
 func (p *NormalProblem) addTestCases() error {
 	fullTestDirPath := fmt.Sprintf("%s/%s", p.ProblemPathName, p.TestsDirPathName)
 	dirs, err := os.ReadDir(fullTestDirPath)
@@ -83,11 +88,12 @@ func (p *NormalProblem) addTestCases() error {
 			}
 			fmt.Printf("File Input Path %s\n", inFilePath)
 			fmt.Printf("File Output Path %s\n", outFilePath)
-			p.TestCases = append(p.TestCases, NewProblemTestCase(inFilePath, outFilePath))
+			p.TestCases = append(p.TestCases, NewProblemTestCase(inFilePath, outFilePath, p.TestLimits))
 		}
 	}
 	return nil
 }
+
 func (p *NormalProblem) initProblemTestCases() error {
 	//dirFiles, err := os.ReadDir(p.problemPathName)
 	problemInfo, err := p.readProblemYaml()
@@ -95,6 +101,7 @@ func (p *NormalProblem) initProblemTestCases() error {
 		return err
 	}
 	p.TestsDirPathName = problemInfo.TestsPath
+	p.TestLimits = problemInfo.TestLimits
 	err = p.addTestCases()
 	if err != nil {
 		return err
@@ -112,6 +119,9 @@ func (p *NormalProblem) NextTestCase() TestCase { //
 func (p *NormalProblem) GetAllTestCases() []*ProblemTestCase {
 	return p.TestCases
 }
+func (p *NormalProblem) GetTestLimits() *TestLimits {
+	return p.TestLimits
+}
 
 type TestCase interface {
 	RunTestCase(string) (int, error)
@@ -120,15 +130,15 @@ type TestCase interface {
 type ProblemTestCase struct {
 	TestInputPath  string
 	TestOutputPath string
+	TestLimits     *TestLimits
 }
 
-func NewProblemTestCase(testInputPath, testOutputPath string) *ProblemTestCase {
-	return &ProblemTestCase{TestInputPath: testInputPath, TestOutputPath: testOutputPath}
+func NewProblemTestCase(testInputPath, testOutputPath string, testLimits *TestLimits) *ProblemTestCase {
+	return &ProblemTestCase{TestInputPath: testInputPath, TestOutputPath: testOutputPath, TestLimits: testLimits}
 }
 
 func (t *ProblemTestCase) RunTestCase(binPath string) (int, error) {
-	cont := NewCmdLimiter(binPath, 6, 2)
-
+	cont := NewCmdLimiter(binPath, t.TestLimits.MemoryLimitMb, t.TestLimits.TimeLimitSec)
 	//	fmt.Println(t.TestInputPath)
 
 	inputFile, err := os.Open(t.TestInputPath)
@@ -140,8 +150,8 @@ func (t *ProblemTestCase) RunTestCase(binPath string) (int, error) {
 
 	cont.Stdin = inputFile
 	cont.Stdout = &clientOutputBuffer
-	if err = cont.Run(); err != nil {
-		fmt.Println(err)
+	_, err = cont.Run()
+	if err != nil {
 		return RESULT_JUDGE_ERROR, err
 	}
 	//fmt.Println(t.TestOutputPath)
