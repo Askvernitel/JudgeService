@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io"
 	_ "io"
 	"os"
 	_ "os/exec"
@@ -136,10 +137,22 @@ type ProblemTestCase struct {
 func NewProblemTestCase(testInputPath, testOutputPath string, testLimits *TestLimits) *ProblemTestCase {
 	return &ProblemTestCase{TestInputPath: testInputPath, TestOutputPath: testOutputPath, TestLimits: testLimits}
 }
+func (t *ProblemTestCase) isCorrectOutput(out io.Reader) (int, error) {
+	//fmt.Println(t.TestOutputPath)
+	correctOutputFile, err := os.Open(t.TestOutputPath)
+	if err != nil {
+		return RESULT_JUDGE_ERROR, err
+	}
+	defer correctOutputFile.Close()
+	areEqualReaders := CompareReaders(correctOutputFile, out)
+	if !areEqualReaders {
+		return RESULT_WRONG_ANSWER, nil
+	}
+	return RESULT_ACCEPTED, nil
 
+}
 func (t *ProblemTestCase) RunTestCase(binPath string) (int, error) {
-	cont := NewCmdLimiter(binPath, t.TestLimits.MemoryLimitMb, t.TestLimits.TimeLimitSec)
-	//	fmt.Println(t.TestInputPath)
+	cmd := NewCmdLimiter(binPath, t.TestLimits.MemoryLimitMb, t.TestLimits.TimeLimitSec)
 
 	inputFile, err := os.Open(t.TestInputPath)
 	if err != nil {
@@ -148,21 +161,25 @@ func (t *ProblemTestCase) RunTestCase(binPath string) (int, error) {
 	defer inputFile.Close()
 	var clientOutputBuffer bytes.Buffer
 
-	cont.Stdin = inputFile
-	cont.Stdout = &clientOutputBuffer
-	_, err = cont.Run()
+	cmd.Stdin = inputFile
+	cmd.Stdout = &clientOutputBuffer
+	result, err := cmd.Run()
 	if err != nil {
 		return RESULT_JUDGE_ERROR, err
 	}
-	//fmt.Println(t.TestOutputPath)
-	realOutputFile, err := os.Open(t.TestOutputPath)
-	if err != nil {
-		return RESULT_JUDGE_ERROR, err
+	//choose the result
+	switch result.Result {
+	case CMD_RESULT_RUN_SUCCESSFUL:
+		result, err := t.isCorrectOutput(&clientOutputBuffer)
+		if err != nil {
+			return RESULT_JUDGE_ERROR, nil
+		}
+		return result, nil
+	case CMD_RESULT_TIME_EXCEEDED_LIMIT:
+		return RESULT_TIME_EXCEEDED_LIMIT, nil
+	case CMD_RESULT_MEMORY_EXCEEDED_LIMIT:
+		return RESULT_TIME_EXCEEDED_LIMIT, nil
+	default:
+		return RESULT_JUDGE_ERROR, nil
 	}
-	defer realOutputFile.Close()
-	areEqualReaders := CompareReaders(realOutputFile, &clientOutputBuffer)
-	if !areEqualReaders {
-		return RESULT_WRONG_ANSWER, nil
-	}
-	return RESULT_ACCEPTED, nil
 }

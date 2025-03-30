@@ -1,5 +1,6 @@
 package main
 
+//TODO: REMOVE EVERY CONTAINER AND CHECK FOR io.copy errors
 import (
 	"context"
 	"fmt"
@@ -58,6 +59,7 @@ func (c *CmdLimiter) Run() (*CmdResult, error) {
 		AttachStdout: true,
 		AttachStderr: true,
 	}, &container.HostConfig{
+		//map binary folder to docker
 		Binds:     []string{"/home/danieludzlieresi/Desktop/backend-project/JudgeService/uploaded-files-tmp/:/uploaded-files-tmp"},
 		Resources: container.Resources{Memory: c.MemoryLimitMb * 1024 * 1024, NanoCPUs: int64(time.Second * time.Duration(c.TimeLimitSec))},
 	}, nil, nil, "")
@@ -76,12 +78,19 @@ func (c *CmdLimiter) Run() (*CmdResult, error) {
 	}
 	timeOutCtx, cancel := context.WithTimeout(ctx, time.Duration(c.TimeLimitSec)*time.Second)
 	defer cancel()
-	go io.Copy(c.Stdout, hijackedResp.Reader)
-	go io.Copy(hijackedResp.Conn, c.Stdin)
+	go func() {
+		_, err = io.Copy(c.Stdout, hijackedResp.Reader)
+	}()
+	go func() {
+		_, err = io.Copy(hijackedResp.Conn, c.Stdin)
+	}()
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-
+	defer func() {
+		if err := cli.ContainerRemove(ctx, containerId, container.RemoveOptions{Force: true}); err != nil {
+		}
+	}()
 	statusCh, errCh := cli.ContainerWait(ctx, containerId, container.WaitConditionNotRunning)
 	select {
 	case <-timeOutCtx.Done():
@@ -93,9 +102,6 @@ func (c *CmdLimiter) Run() (*CmdResult, error) {
 		return nil, err
 	case exitStatus := <-statusCh:
 		fmt.Printf("Exit Code: %v", exitStatus.StatusCode)
-	}
-	if err := cli.ContainerRemove(ctx, containerId, container.RemoveOptions{Force: true}); err != nil {
-		return nil, err
 	}
 	return &CmdResult{Result: CMD_RESULT_RUN_SUCCESSFUL}, err
 }

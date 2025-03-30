@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"google.golang.org/grpc"
 )
 
 const (
@@ -32,6 +33,16 @@ func WithErrorHandleFunc(f ErrorHandlerFunc) http.HandlerFunc {
 			//			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	}
+}
+
+func WithAuthHandleFunc(f ErrorHandlerFunc) http.HandlerFunc {
+
+	_, err := grpc.NewClient("localhost:50000", grpc.WithInsecure())
+	if err != nil {
+
+	}
+
+	return nil
 }
 
 func (s *Server) Run() error {

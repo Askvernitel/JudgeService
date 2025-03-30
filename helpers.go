@@ -21,7 +21,7 @@ func readFileBytesByPath(pathName string) ([]byte, error) {
 
 func removeTransimssionBytes(b []byte) []byte {
 	return bytes.Map(func(r rune) rune {
-		if r == 0 || r == 1 || r == 4 {
+		if r == 0 || r == 1 || r == 4 || r == 3 {
 			return -1
 		}
 		return r
