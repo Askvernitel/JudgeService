@@ -1,15 +1,18 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	_ "os/exec"
 
+	pb "JudgeService.com/proto"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 const (
@@ -35,21 +38,33 @@ func WithErrorHandleFunc(f ErrorHandlerFunc) http.HandlerFunc {
 	}
 }
 
-func WithAuthHandleFunc(f ErrorHandlerFunc) http.HandlerFunc {
+func WithAuthHandleFunc(f http.HandlerFunc) http.HandlerFunc {
 
-	_, err := grpc.NewClient("localhost:50000", grpc.WithInsecure())
-	if err != nil {
+	return func(w http.ResponseWriter, r *http.Request) {
+		conn, err := grpc.NewClient("localhost:50000", grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			WriteJSON(w, http.StatusInternalServerError, ApiError{Error: err.Error()})
+			return
+		}
+		defer conn.Close()
+		service := pb.NewAuthServiceClient(conn)
+		resp, err := service.Auth(context.Background(), &pb.AuthRequest{Token: "Its My Cool Token"})
 
+		if err != nil {
+			WriteJSON(w, http.StatusInternalServerError, ApiError{Error: err.Error()})
+			return
+		}
+		fmt.Println(resp.Ok)
+
+		f(w, r)
 	}
-
-	return nil
 }
 
 func (s *Server) Run() error {
 	r := mux.NewRouter()
 
 	r.Use(mux.CORSMethodMiddleware(r))
-	r.HandleFunc("/judge/{contest}/{problem}", WithErrorHandleFunc(s.JudgeProblem)).Methods("POST", "OPTIONS")
+	r.HandleFunc("/judge/{contest}/{problem}", WithAuthHandleFunc(WithErrorHandleFunc(s.JudgeProblem))).Methods("POST", "OPTIONS")
 
 	if err := http.ListenAndServe(":4040", handlers.CORS()(r)); err != nil {
 		return err
