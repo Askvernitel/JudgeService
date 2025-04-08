@@ -41,14 +41,20 @@ func WithErrorHandleFunc(f ErrorHandlerFunc) http.HandlerFunc {
 func WithAuthHandleFunc(f http.HandlerFunc) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		token, err := ExtractToken(r)
+		if err != nil {
+			WriteJSON(w, http.StatusForbidden, ApiError{Error: err.Error()})
+			return
+		}
 		conn, err := grpc.NewClient("localhost:50000", grpc.WithTransportCredentials(insecure.NewCredentials()))
+
 		if err != nil {
 			WriteJSON(w, http.StatusInternalServerError, ApiError{Error: err.Error()})
 			return
 		}
 		defer conn.Close()
 		service := pb.NewAuthServiceClient(conn)
-		resp, err := service.Auth(context.Background(), &pb.AuthRequest{Token: "Its My Cool Token"})
+		resp, err := service.Auth(context.Background(), &pb.AuthRequest{Token: token})
 
 		if err != nil {
 			WriteJSON(w, http.StatusInternalServerError, ApiError{Error: err.Error()})

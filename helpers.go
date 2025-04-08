@@ -4,9 +4,11 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"strings"
 )
 
 func readFileBytesByPath(pathName string) ([]byte, error) {
@@ -48,4 +50,19 @@ func WriteJSON(w http.ResponseWriter, status int, v any) error {
 	}
 	return nil
 
+}
+
+func ExtractToken(r *http.Request) (token string, err error) {
+	token = r.Header.Get("Authorization")
+	fmt.Println("token")
+	if token == "" {
+		return "", fmt.Errorf("No Token")
+	}
+
+	token, ok := strings.CutPrefix(token, "Bearer ")
+	if !ok {
+		return "", fmt.Errorf("Incorrect Format")
+	}
+
+	return token, nil
 }
