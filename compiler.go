@@ -4,6 +4,7 @@ import (
 	//	"bytes"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 
 	"github.com/google/uuid"
@@ -12,6 +13,7 @@ import (
 type Compiler interface {
 	Compile() error
 	OutputBinPathName() string
+	DeleteOutputFile() error
 }
 
 const (
@@ -60,6 +62,10 @@ func (c *GppCompiler) Compile() error {
 func (c *GppCompiler) OutputBinPathName() string {
 	return c.OutputFileName
 }
-
-func (c *GppCompiler) DeleteOutputFile() {
+func (c *GppCompiler) DeleteOutputFile() error {
+	err := os.Remove(c.OutputBinPathName())
+	if err != nil {
+		return err
+	}
+	return nil
 }

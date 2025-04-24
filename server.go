@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	_ "os/exec"
 
 	pb "JudgeService.com/proto"
@@ -107,6 +106,12 @@ func (s *Server) JudgeProblem(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	compiler := NewCppCompiler("", &fileBytes)
+	defer func() {
+		err := compiler.DeleteOutputFile()
+		if err != nil {
+			panic(err)
+		}
+	}()
 	problem := NewNormalProblem(contestName, problemName)
 	err = problem.initProblemTestCases()
 	if err != nil {
@@ -119,11 +124,7 @@ func (s *Server) JudgeProblem(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	err = os.Remove(judge.Compiler.OutputBinPathName())
-	if err != nil {
-		return err
-	}
-	return WriteJSON(w, http.StatusOK, JudgeResponse{Results: judge.Results})
+	return WriteJSON(w, http.StatusOK, JudgeResponse{TestResults: judge.Results})
 }
 
 func getContestName(r *http.Request) (string, error) {

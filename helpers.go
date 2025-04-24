@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 func readFileBytesByPath(pathName string) ([]byte, error) {
@@ -65,4 +66,9 @@ func ExtractToken(r *http.Request) (token string, err error) {
 	}
 
 	return token, nil
+}
+func WriteResult(r *TestResult, v int, t time.Duration) *TestResult {
+	r.Result = v
+	r.TimeTakenSec = t
+	return r
 }

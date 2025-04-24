@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"time"
 )
 
 type ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request) error
@@ -16,9 +17,15 @@ type ProblemYaml struct {
 	*TestLimits `yaml:"limits"`
 }
 type JudgeResponse struct {
-	Results         []int `json:"results"`
-	TimeForEachTest []int `json:"timeForEachTest"`
-	Score           int   `json:"score"`
+	TestResults []*TestResult `json:"testResults"`
+	/*Results         []int `json:"results"`
+	TimeForEachTest []int `json:"timeForEachTest"`*/
+	//MemoryTakenForEachTest
+	Score int `json:"score"`
+}
+type TestResult struct {
+	Result       int           `json:"result"`
+	TimeTakenSec time.Duration `json:"timeTakenSec"`
 }
 type ApiError struct {
 	Error string `json:"error"`
@@ -26,6 +33,6 @@ type ApiError struct {
 
 type CmdResult struct {
 	Result        int
-	TimeTakenSec  int
+	TimeTakenSec  time.Duration
 	MemoryTakenMb int
 }

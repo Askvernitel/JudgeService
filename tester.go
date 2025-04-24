@@ -3,7 +3,7 @@ package main
 //import "os/exec"
 
 type Tester interface {
-	Run(string) ([]int, error)
+	Run(string) ([]*TestResult, error)
 }
 
 type CppTester struct {
@@ -14,10 +14,10 @@ func NewCppTester(problem Problem) *CppTester {
 	return &CppTester{Problem: problem}
 }
 
-func (c *CppTester) Run(binPathName string) ([]int, error) {
+func (c *CppTester) Run(binPathName string) ([]*TestResult, error) {
 
 	test := c.Problem.NextTestCase()
-	results := []int{}
+	results := []*TestResult{}
 	for test != nil {
 		result, err := test.RunTestCase(binPathName)
 		if err != nil {

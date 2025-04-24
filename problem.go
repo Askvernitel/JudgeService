@@ -125,7 +125,7 @@ func (p *NormalProblem) GetTestLimits() *TestLimits {
 }
 
 type TestCase interface {
-	RunTestCase(string) (int, error)
+	RunTestCase(string) (*TestResult, error)
 }
 
 type ProblemTestCase struct {
@@ -151,35 +151,35 @@ func (t *ProblemTestCase) isCorrectOutput(out io.Reader) (int, error) {
 	return RESULT_ACCEPTED, nil
 
 }
-func (t *ProblemTestCase) RunTestCase(binPath string) (int, error) {
+func (t *ProblemTestCase) RunTestCase(binPath string) (*TestResult, error) {
 	cmd := NewCmdLimiter(binPath, t.TestLimits.MemoryLimitMb, t.TestLimits.TimeLimitSec)
-
+	testResult := &TestResult{}
 	inputFile, err := os.Open(t.TestInputPath)
 	if err != nil {
-		return RESULT_JUDGE_ERROR, err
+		return WriteResult(testResult, RESULT_JUDGE_ERROR, 0), err
 	}
 	defer inputFile.Close()
 	var clientOutputBuffer bytes.Buffer
 
 	cmd.Stdin = inputFile
 	cmd.Stdout = &clientOutputBuffer
-	result, err := cmd.Run()
+	cmdResult, err := cmd.Run()
 	if err != nil {
-		return RESULT_JUDGE_ERROR, err
+		return WriteResult(testResult, RESULT_JUDGE_ERROR, 0), err
 	}
 	//choose the result
-	switch result.Result {
+	switch cmdResult.Result {
 	case CMD_RESULT_RUN_SUCCESSFUL:
 		result, err := t.isCorrectOutput(&clientOutputBuffer)
 		if err != nil {
-			return RESULT_JUDGE_ERROR, nil
+			return WriteResult(testResult, RESULT_JUDGE_ERROR, 0), err
 		}
-		return result, nil
+		return WriteResult(testResult, result, cmdResult.TimeTakenSec), nil
 	case CMD_RESULT_TIME_EXCEEDED_LIMIT:
-		return RESULT_TIME_EXCEEDED_LIMIT, nil
+		return WriteResult(testResult, RESULT_TIME_EXCEEDED_LIMIT, 0), nil
 	case CMD_RESULT_MEMORY_EXCEEDED_LIMIT:
-		return RESULT_TIME_EXCEEDED_LIMIT, nil
+		return WriteResult(testResult, RESULT_MEMORY_EXCEEDED_LIMIT, 0), nil
 	default:
-		return RESULT_JUDGE_ERROR, nil
+		return WriteResult(testResult, RESULT_JUDGE_ERROR, 0), nil
 	}
 }

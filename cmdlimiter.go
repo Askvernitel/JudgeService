@@ -36,7 +36,7 @@ func NewCmdLimiter(binPath string, memoryLimitMb int64, timeLimitSec int64) *Cmd
 func (c *CmdLimiter) Run() (*CmdResult, error) {
 	ctx := context.Background()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 
 	if err != nil {
 		return nil, err
@@ -77,18 +77,19 @@ func (c *CmdLimiter) Run() (*CmdResult, error) {
 		return nil, err
 	}
 	timeOutCtx, cancel := context.WithTimeout(ctx, time.Duration(c.TimeLimitSec)*time.Second)
+	var timeWroteToStdin, timeWroteToStdout time.Time
 	defer cancel()
 	go func() {
 		_, err = io.Copy(c.Stdout, hijackedResp.Reader)
+		timeWroteToStdout = time.Now()
 	}()
 	go func() {
 		_, err = io.Copy(hijackedResp.Conn, c.Stdin)
+		timeWroteToStdin = time.Now()
 	}()
-	if err != nil {
-		return nil, err
-	}
 	defer func() {
 		if err := cli.ContainerRemove(ctx, containerId, container.RemoveOptions{Force: true}); err != nil {
+			fmt.Println("Container Not Removed")
 		}
 	}()
 	statusCh, errCh := cli.ContainerWait(ctx, containerId, container.WaitConditionNotRunning)
@@ -103,5 +104,16 @@ func (c *CmdLimiter) Run() (*CmdResult, error) {
 	case exitStatus := <-statusCh:
 		fmt.Printf("Exit Code: %v", exitStatus.StatusCode)
 	}
-	return &CmdResult{Result: CMD_RESULT_RUN_SUCCESSFUL}, err
+	//TODO: SEPARATE STUFF INTO FUNCTIONS
+	info, err := cli.ContainerInspect(ctx, containerId)
+	if err != nil {
+		return nil, err
+	}
+	_, err = time.Parse(time.RFC3339Nano, info.State.StartedAt)
+	if err != nil {
+		return nil, err
+	}
+	stdinTime := time.Since(timeWroteToStdin)
+	stdoutTime := time.Since(timeWroteToStdout)
+	return &CmdResult{Result: CMD_RESULT_RUN_SUCCESSFUL, TimeTakenSec: stdinTime - stdoutTime}, err
 }

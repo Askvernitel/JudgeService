@@ -20,11 +20,11 @@ const (
 type CppJudge struct {
 	Tester   Tester
 	Compiler Compiler
-	Results  []int
+	Results  []*TestResult
 }
 
 func NewCppJudge(compiler Compiler, tester Tester) *CppJudge {
-	return &CppJudge{Compiler: compiler, Tester: tester, Results: []int{}}
+	return &CppJudge{Compiler: compiler, Tester: tester, Results: []*TestResult{}}
 }
 
 func (j *CppJudge) Run() error {
