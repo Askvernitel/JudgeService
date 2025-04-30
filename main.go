@@ -4,7 +4,10 @@ package main
 // data will not just go to memory
 
 //TODO: Add every path variable to path
-import "os"
+import (
+	"fmt"
+	"os"
+)
 
 var problemsPath string
 
@@ -15,5 +18,8 @@ func main() {
 
 	server := NewServer()
 
-	server.Run()
+	err := server.Run()
+	if err != nil {
+		fmt.Println(err)
+	}
 }

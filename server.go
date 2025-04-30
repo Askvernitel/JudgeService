@@ -107,9 +107,9 @@ func (s *Server) JudgeProblem(w http.ResponseWriter, r *http.Request) error {
 	}
 	compiler := NewCppCompiler("", &fileBytes)
 	defer func() {
-		err := compiler.DeleteOutputFile()
+		//		err := compiler.DeleteOutputFile()
 		if err != nil {
-			panic(err)
+			//			panic(err)
 		}
 	}()
 	problem := NewNormalProblem(contestName, problemName)

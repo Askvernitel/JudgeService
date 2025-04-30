@@ -20,6 +20,7 @@ func (c *CppTester) Run(binPathName string) ([]*TestResult, error) {
 	results := []*TestResult{}
 	for test != nil {
 		result, err := test.RunTestCase(binPathName)
+
 		if err != nil {
 			return results, err
 		}

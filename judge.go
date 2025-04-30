@@ -29,7 +29,7 @@ func NewCppJudge(compiler Compiler, tester Tester) *CppJudge {
 
 func (j *CppJudge) Run() error {
 	err := j.Compiler.Compile()
-
+	fmt.Println("HERE: ", err)
 	if err != nil {
 		return err
 	}
