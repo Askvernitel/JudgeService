@@ -20,11 +20,11 @@ const (
 )
 
 type Server struct {
-	Addr string
+	HttpServAddr string
 }
 
-func NewServer() *Server {
-	return &Server{}
+func NewServer(httpAddr string) *Server {
+	return &Server{HttpServAddr: httpAddr}
 }
 
 func WithErrorHandleFunc(f ErrorHandlerFunc) http.HandlerFunc {
@@ -59,6 +59,10 @@ func WithAuthHandleFunc(f http.HandlerFunc) http.HandlerFunc {
 			WriteJSON(w, http.StatusInternalServerError, ApiError{Error: err.Error()})
 			return
 		}
+		if !resp.Ok {
+			//			WriteJSON(w, http.StatusForbidden, ApiError{Error: "Access Denied"})
+			//			return
+		}
 		fmt.Println(resp.Ok)
 
 		f(w, r)
@@ -71,7 +75,7 @@ func (s *Server) Run() error {
 	r.Use(mux.CORSMethodMiddleware(r))
 	r.HandleFunc("/judge/{contest}/{problem}", WithAuthHandleFunc(WithErrorHandleFunc(s.JudgeProblem))).Methods("POST", "OPTIONS")
 
-	if err := http.ListenAndServe(":4040", handlers.CORS()(r)); err != nil {
+	if err := http.ListenAndServe(s.HttpServAddr, handlers.CORS()(r)); err != nil {
 		return err
 	}
 
@@ -107,9 +111,9 @@ func (s *Server) JudgeProblem(w http.ResponseWriter, r *http.Request) error {
 	}
 	compiler := NewCppCompiler("", &fileBytes)
 	defer func() {
-		//		err := compiler.DeleteOutputFile()
+		err := compiler.DeleteOutputFile()
 		if err != nil {
-			//			panic(err)
+			fmt.Println("It Did not Delete I guess")
 		}
 	}()
 	problem := NewNormalProblem(contestName, problemName)

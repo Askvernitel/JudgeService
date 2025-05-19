@@ -23,6 +23,7 @@ type JudgeResponse struct {
 	//MemoryTakenForEachTest
 	Score int `json:"score"`
 }
+
 type TestResult struct {
 	Result       int           `json:"result"`
 	TimeTakenSec time.Duration `json:"timeTakenSec"`
@@ -31,7 +32,7 @@ type ApiError struct {
 	Error string `json:"error"`
 }
 
-type CmdResult struct {
+type LimiterResult struct {
 	Result        int
 	TimeTakenSec  time.Duration
 	MemoryTakenMb int

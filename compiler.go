@@ -10,16 +10,17 @@ import (
 	"github.com/google/uuid"
 )
 
+const (
+	GPP_COMPILER_COMMAND = "g++"
+	//COMPILED_BINARIES_DIR = "./uploaded-files-tmp/"
+)
+
+// COMPILER
 type Compiler interface {
 	Compile() error
 	OutputBinPathName() string
 	DeleteOutputFile() error
 }
-
-const (
-	GPP_COMPILER_COMMAND  = "g++"
-	COMPILED_BINARIES_DIR = "./uploaded-files-tmp/"
-)
 
 type GppCompiler struct {
 	FilePathName   string
@@ -31,7 +32,7 @@ type GppCompiler struct {
 func NewCppCompiler(filePathName string, fileData *[]byte) *GppCompiler {
 	return &GppCompiler{
 		FilePathName: filePathName, FileData: fileData,
-		OutputFileName: COMPILED_BINARIES_DIR + uuid.New().String(),
+		OutputFileName: os.Getenv("BIN_OUTPUT_PATH") + uuid.New().String(),
 	}
 }
 

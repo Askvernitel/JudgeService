@@ -33,9 +33,9 @@ func removeTransimssionBytes(b []byte) []byte {
 func CompareReaders(reader1, reader2 io.Reader) bool {
 	scanner1 := bufio.NewScanner(reader1)
 	scanner2 := bufio.NewScanner(reader2)
-	for scanner2.Scan() {
+	/*for scanner2.Scan() {
 		fmt.Println(string(scanner2.Bytes()))
-	}
+	}*/
 	for scanner1.Scan() && scanner2.Scan() {
 		fmt.Println(string(scanner2.Bytes()))
 		if !bytes.Equal(removeTransimssionBytes(scanner1.Bytes()), removeTransimssionBytes(scanner2.Bytes())) {

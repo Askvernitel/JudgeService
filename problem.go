@@ -12,13 +12,12 @@ import (
 	yaml "gopkg.in/yaml.v3"
 )
 
+// PROBLEM
 type Problem interface {
 	NextTestCase() TestCase
 	GetAllTestCases() []*ProblemTestCase
 	GetTestLimits() *TestLimits
 }
-
-//var problemsPath string = os.Getenv("PROBLEMS_PATH")
 
 const (
 	PROBLEM_YAML            = "problem.yaml"
@@ -124,8 +123,9 @@ func (p *NormalProblem) GetTestLimits() *TestLimits {
 	return p.TestLimits
 }
 
+// TESTCASE
 type TestCase interface {
-	RunTestCase(string) (*TestResult, error)
+	RunTestCase(string, ResourceLimiter) (*TestResult, error)
 }
 
 type ProblemTestCase struct {
@@ -137,6 +137,7 @@ type ProblemTestCase struct {
 func NewProblemTestCase(testInputPath, testOutputPath string, testLimits *TestLimits) *ProblemTestCase {
 	return &ProblemTestCase{TestInputPath: testInputPath, TestOutputPath: testOutputPath, TestLimits: testLimits}
 }
+
 func (t *ProblemTestCase) isCorrectOutput(out io.Reader) (int, error) {
 	//fmt.Println(t.TestOutputPath)
 	correctOutputFile, err := os.Open(t.TestOutputPath)
@@ -151,8 +152,8 @@ func (t *ProblemTestCase) isCorrectOutput(out io.Reader) (int, error) {
 	return RESULT_ACCEPTED, nil
 
 }
-func (t *ProblemTestCase) RunTestCase(binPath string) (*TestResult, error) {
-	cmd := NewCmdLimiter(binPath, t.TestLimits.MemoryLimitMb, t.TestLimits.TimeLimitSec)
+func (t *ProblemTestCase) RunTestCase(binPath string, cmd ResourceLimiter) (*TestResult, error) {
+	//	cmd := NewCmdLimiter(binPath, t.TestLimits.MemoryLimitMb, t.TestLimits.TimeLimitSec)
 	testResult := &TestResult{}
 	inputFile, err := os.Open(t.TestInputPath)
 	if err != nil {
@@ -161,8 +162,8 @@ func (t *ProblemTestCase) RunTestCase(binPath string) (*TestResult, error) {
 	defer inputFile.Close()
 	var clientOutputBuffer bytes.Buffer
 
-	cmd.Stdin = inputFile
-	cmd.Stdout = &clientOutputBuffer
+	cmd.SetStdin(inputFile)
+	cmd.SetStdout(&clientOutputBuffer)
 	cmdResult, err := cmd.Run()
 	if err != nil {
 		return WriteResult(testResult, RESULT_JUDGE_ERROR, 0), err

@@ -15,11 +15,12 @@ func NewCppTester(problem Problem) *CppTester {
 }
 
 func (c *CppTester) Run(binPathName string) ([]*TestResult, error) {
-
+	problemLimits := c.Problem.GetTestLimits()
+	limiter := NewCmdLimiter(binPathName, problemLimits.MemoryLimitMb, problemLimits.TimeLimitSec)
 	test := c.Problem.NextTestCase()
 	results := []*TestResult{}
 	for test != nil {
-		result, err := test.RunTestCase(binPathName)
+		result, err := test.RunTestCase(binPathName, limiter)
 
 		if err != nil {
 			return results, err

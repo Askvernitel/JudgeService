@@ -12,11 +12,11 @@ import (
 var problemsPath string
 
 func main() {
-	os.Setenv("PROBLEMS_PATH", "./problems")
-	os.Setenv("BIN_OUTPUT_PATH", "~/Desktop/backend-project/JudgeService/uploaded-files-tmp")
 	problemsPath = os.Getenv("PROBLEMS_PATH")
+	//binOutPath := os.Getenv("BIN_OUTPUT_PATH")
 
-	server := NewServer()
+	httpServerPort := ":4040"
+	server := NewServer(httpServerPort)
 
 	err := server.Run()
 	if err != nil {
