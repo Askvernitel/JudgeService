@@ -15,8 +15,11 @@ func NewCppTester(problem Problem) *CppTester {
 }
 
 func (c *CppTester) Run(binPathName string) ([]*TestResult, error) {
-	problemLimits := c.Problem.GetTestLimits()
-	limiter := NewCmdLimiter(binPathName, problemLimits.MemoryLimitMb, problemLimits.TimeLimitSec)
+	//problemLimits := c.Problem.GetTestLimits()
+	limiter := NewNoLimiter(binPathName)
+
+	//good Limiters commented
+	//	limiter := NewCmdLimiter(binPathName, problemLimits.MemoryLimitMb, problemLimits.TimeLimitSec)
 	test := c.Problem.NextTestCase()
 	results := []*TestResult{}
 	for test != nil {

@@ -57,7 +57,6 @@ func WriteJSON(w http.ResponseWriter, status int, v any) error {
 	return nil
 
 }
-
 func ExtractToken(r *http.Request) (token string, err error) {
 	token = r.Header.Get("Authorization")
 	fmt.Println("token")

@@ -170,15 +170,15 @@ func (t *ProblemTestCase) RunTestCase(binPath string, cmd ResourceLimiter) (*Tes
 	}
 	//choose the result
 	switch cmdResult.Result {
-	case CMD_RESULT_RUN_SUCCESSFUL:
+	case LIMITER_RESULT_RUN_SUCCESSFUL:
 		result, err := t.isCorrectOutput(&clientOutputBuffer)
 		if err != nil {
 			return WriteResult(testResult, RESULT_JUDGE_ERROR, 0), err
 		}
 		return WriteResult(testResult, result, cmdResult.TimeTakenSec), nil
-	case CMD_RESULT_TIME_EXCEEDED_LIMIT:
+	case LIMITER_RESULT_TIME_EXCEEDED_LIMIT:
 		return WriteResult(testResult, RESULT_TIME_EXCEEDED_LIMIT, 0), nil
-	case CMD_RESULT_MEMORY_EXCEEDED_LIMIT:
+	case LIMITER_RESULT_MEMORY_EXCEEDED_LIMIT:
 		return WriteResult(testResult, RESULT_MEMORY_EXCEEDED_LIMIT, 0), nil
 	default:
 		return WriteResult(testResult, RESULT_JUDGE_ERROR, 0), nil

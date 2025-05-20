@@ -23,9 +23,9 @@ type ResourceLimiter interface {
 
 // LIMITER WITH DOCKER
 const (
-	CMD_RESULT_RUN_SUCCESSFUL        = 1
-	CMD_RESULT_TIME_EXCEEDED_LIMIT   = 2
-	CMD_RESULT_MEMORY_EXCEEDED_LIMIT = 3
+	LIMITER_RESULT_RUN_SUCCESSFUL        = 1
+	LIMITER_RESULT_TIME_EXCEEDED_LIMIT   = 2
+	LIMITER_RESULT_MEMORY_EXCEEDED_LIMIT = 3
 )
 
 type CmdLimiter struct {
@@ -150,7 +150,7 @@ func (c *CmdLimiter) Run() (*LimiterResult, error) {
 		if err := cli.ContainerKill(ctx, containerId, "SIGKILL"); err != nil {
 			return nil, err
 		}
-		return &LimiterResult{Result: CMD_RESULT_TIME_EXCEEDED_LIMIT}, nil
+		return &LimiterResult{Result: LIMITER_RESULT_TIME_EXCEEDED_LIMIT}, nil
 	case err = <-errCh:
 		return nil, err
 	case exitStatus := <-statusCh:
@@ -159,5 +159,5 @@ func (c *CmdLimiter) Run() (*LimiterResult, error) {
 	}
 	stdinTime := time.Since(timeWroteToStdin)
 	stdoutTime := time.Since(timeWroteToStdout)
-	return &LimiterResult{Result: CMD_RESULT_RUN_SUCCESSFUL, TimeTakenSec: stdinTime - stdoutTime}, err
+	return &LimiterResult{Result: LIMITER_RESULT_RUN_SUCCESSFUL, TimeTakenSec: stdinTime - stdoutTime}, err
 }
