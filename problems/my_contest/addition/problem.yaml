@@ -1,0 +1,4 @@
+tests_path: "data"
+limits:
+  memory_limit_mb: 256
+  time_limit_sec: 2

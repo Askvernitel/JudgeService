@@ -14,12 +14,16 @@ func NewCppTester(problem Problem) *CppTester {
 	return &CppTester{Problem: problem}
 }
 
-func (c *CppTester) Run(binPathName string) ([]*TestResult, error) {
-	//problemLimits := c.Problem.GetTestLimits()
-	limiter := NewNoLimiter(binPathName)
+//problemLimits := c.Problem.GetTestLimits()
+//good Limiters commented
+//	limiter := NewCmdLimiter(binPathName, problemLimits.MemoryLimitMb, problemLimits.TimeLimitSec)
 
-	//good Limiters commented
-	//	limiter := NewCmdLimiter(binPathName, problemLimits.MemoryLimitMb, problemLimits.TimeLimitSec)
+//limiter := NewNoLimiter(binPathName)
+
+// cmd := exec.Command(c.binPathName)
+func (c *CppTester) Run(binPathName string) ([]*TestResult, error) {
+	problemLimits := c.Problem.GetTestLimits()
+	limiter := NewCmdLimiter(binPathName, problemLimits.MemoryLimitMb, problemLimits.TimeLimitSec)
 	test := c.Problem.NextTestCase()
 	results := []*TestResult{}
 	for test != nil {
@@ -31,7 +35,6 @@ func (c *CppTester) Run(binPathName string) ([]*TestResult, error) {
 		results = append(results, result)
 		test = c.Problem.NextTestCase()
 	}
-	//	cmd := exec.Command(c.binPathName)
 
 	return results, nil
 }

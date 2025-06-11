@@ -5,7 +5,7 @@ package main
 
 //TODO: Add every path variable to path
 import (
-	"fmt"
+	"log"
 	"os"
 )
 
@@ -15,11 +15,13 @@ func main() {
 	problemsPath = os.Getenv("PROBLEMS_PATH")
 	//binOutPath := os.Getenv("BIN_OUTPUT_PATH")
 
-	httpServerPort := ":4040"
+	httpServerPort := os.Getenv("SERVER_PORT")
+
 	server := NewServer(httpServerPort)
 
 	err := server.Run()
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal("Server Did Not Run")
+
 	}
 }

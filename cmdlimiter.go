@@ -84,12 +84,15 @@ func (c *CmdLimiter) initContainer(ctx context.Context, cli *client.Client, resp
 		Stdout: true,
 		Stderr: true,
 	})
+	fmt.Println("1")
 	if err != nil {
 		return hijackedResp, err
 	}
+	fmt.Println("2")
 	if err := cli.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
 		return types.HijackedResponse{}, err
 	}
+	fmt.Println("3")
 	return hijackedResp, err
 }
 func (c *CmdLimiter) SetStdin(stdin io.Reader) {
@@ -118,6 +121,7 @@ func (c *CmdLimiter) Run() (*LimiterResult, error) {
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("WOHOOO")
 	containerId := resp.ID
 	timeOutCtx, cancel := context.WithTimeout(ctx, time.Duration(c.TimeLimitSec)*time.Second)
 
@@ -148,6 +152,7 @@ func (c *CmdLimiter) Run() (*LimiterResult, error) {
 	select {
 	case <-timeOutCtx.Done():
 		if err := cli.ContainerKill(ctx, containerId, "SIGKILL"); err != nil {
+			fmt.Println("Container Was Not Killed")
 			return nil, err
 		}
 		return &LimiterResult{Result: LIMITER_RESULT_TIME_EXCEEDED_LIMIT}, nil

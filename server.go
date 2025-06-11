@@ -60,8 +60,8 @@ func WithAuthHandleFunc(f http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 		if !resp.Ok {
-			//			WriteJSON(w, http.StatusForbidden, ApiError{Error: "Access Denied"})
-			//			return
+			WriteJSON(w, http.StatusForbidden, ApiError{Error: "Access Denied"})
+			return
 		}
 		fmt.Println(resp.Ok)
 
